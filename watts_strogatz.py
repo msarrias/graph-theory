@@ -47,6 +47,7 @@ class watts_strogatz_graph:
     def rewire_WS_model(self):
         self.rewired_edges = []
         for edge in self.WS.list_edges:
+#             print(edge)
             u, v = edge
             if len(self.WS.graph[u].keys()) >= self.N - 1:
                 break
@@ -68,9 +69,9 @@ class watts_strogatz_graph:
             # find which  neighbors of "node" are connected to every other neighbor of "node".
             for n_node in node_n:
                 #go through neighbors of neighbor of "node"
-                for nn_node in self.WS.get_vertices(n_node):
+                for nn_node in self.WS.get_neighbors(n_node):
                     v, w = sorted([n_node, nn_node])
-                    if nn_node != node and nn_node in self.WS.get_vertices(node) and (v,w) not in n_edges:
+                    if nn_node != node and nn_node in self.WS.get_neighbors(node) and (v,w) not in n_edges:
                         n_edges.append((v, w))
             C += len(n_edges) / max_n_edges
         return C / self.N
@@ -84,7 +85,7 @@ class watts_strogatz_graph:
             path_lengths[node] = 0
             while not queue.is_empty():
                 current_node = queue.pop()
-                for w in self.WS.get_vertices(current_node):
+                for w in self.WS.get_neighbors(current_node):
                     if path_lengths[w] == -1:
                         queue.append(w)
                         path_lengths[w] = path_lengths[current_node] + 1
