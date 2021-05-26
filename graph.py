@@ -8,7 +8,7 @@ class Graph:
         self.edges = []
         self.isolated_nodes = []
         self.list_edges = []
-        self.weight = weight
+        self.weight = weight #For unweighted graphs
         
     def init_nodes(self):
         self.graph = {int_val: dict() for int_val in range(1, self.N + 1)}
@@ -16,11 +16,17 @@ class Graph:
     def nodes(self):
         return list(self.graph.keys())
     
-    def number_of_vertices(self):
+    def number_of_edges(self):
         return len(self.edges)
     
-    def get_vertices(self, node):
+    def get_neighbors(self, node):
         return list(self.graph[node].keys())
+    
+    def get_neighbors_weights(self, node):
+        return np.asarray(list(self.graph[node].values()))
+    
+    def node_degree(self, node):
+        return sum(list(self.graph[node].values()))
     
     def find_edge(self, node1, node2):
         try:
@@ -28,13 +34,38 @@ class Graph:
         except KeyError:
             return None
     
-    def add_edge(self, node1, node2):
+    def add_edge(self, node1, node2, weight = 1):
         u,v = sorted([node1, node2])
         if (u-1, v-1) not in self.edges and u != v:
-            self.graph[u][v] = self.weight
-            self.graph[v][u] = self.weight
+            self.graph[u][v] = weight
+            self.graph[v][u] = weight
             self.edges.append((u-1, v-1))
     
+    def remove_edge(self, node1, node2):
+        u, v = sorted([node1, node2])
+        if self.find_edge(u, v) != None:
+            del self.graph[u][v]
+            del self.graph[v][u]
+            self.edges.remove((u - 1, v - 1))
+    
+    def remove_node(self, node):
+        node_neighbors = self.get_neighbors(node)
+        for neighbor in node_neighbors:
+            self.remove_edge(node,neighbor)
+        if len(self.get_neighbors(node)) == 0:
+            del self.graph[node]
+        else: 
+            raise Exception('something went wrong')
+    
+    def create_new_node(self):
+        new_node_idx = max(self.nodes()) + 1
+        self.graph[new_node_idx] = {} 
+               
+    def enhance_edge_weight(self, node1, node2, delta):
+        self.graph[node1][node2] += delta
+        self.graph[node2][node1] += delta
+    
+        
     def get_knn(self, padded_list, j, m):
         return sorted(padded_list[j - m : j][:: -1] + padded_list[j + 1: j + m + 1])
     
@@ -60,18 +91,11 @@ class Graph:
             for node, edges in self.graph.items():
                 if edges == {}: self.isolated_nodes.append(node)
     
-    def remove_edge(self, node1, node2):
-        u, v = sorted([node1, node2])
-        if self.find_edge(u, v) != None:
-            del self.graph[u][v]
-            del self.graph[v][u]
-            self.edges.remove((u - 1, v - 1))
-               
     def adjacency_matrix(self):
         A = np.zeros((self.N, self.N))
         for i in self.edges: 
             r, c = i
-            A[r][c] = self.weight
+            A[r][c] = self.graph[r+1][c+1]
             A[c][r] = A[r][c]
         
         return A
