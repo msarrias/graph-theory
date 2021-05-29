@@ -10,6 +10,19 @@ class Graph:
         self.list_edges = []
         self.weight = weight #For unweighted graphs
         
+    def is_symmetric(self, matrix):
+        if matrix == matrix.T:
+            return True
+        
+    def graph_from_A_matrix(self, A):
+        if self.is_symmetric(A):
+            self.init_nodes()
+            for n_i in range(N):
+                for n_j in range(n_i, N):
+                    self.add_edge(n_i, n_j, A[n_i,n_j])
+        else:
+            raise Exception('Adjacency matrix is not symmetric')
+
     def init_nodes(self):
         self.graph = {int_val: dict() for int_val in range(1, self.N + 1)}
         
