@@ -138,7 +138,8 @@ class AdaptiveKNNGraph:
         """
         The recursive logic: ensures internal connectivity of clusters.
         :param dist_matrix: Optional distance matrix
-        for a subset of points (used in recursion)"""
+        for a subset of points (used in recursion)
+        """
         D = dist_matrix if dist_matrix is not None else self.dist_matrix
         k = self.find_smallest_k(dist_subset=D)
         adj = self.get_adjacency(k=k, dist_subset=D)
@@ -158,10 +159,8 @@ class AdaptiveKNNGraph:
                         adj[np.ix_(indices, indices)] = self.build_refined_adj(dist_matrix=sub_dist)
         return adj
 
-    def fit(self):
-        """Main entry point to generate the weighted matrix W."""
+    def compute_W(self):
         A = self.build_refined_adj()
         # Apply inverse quadratic weighting: 1 / (1 + d^2)
         W = np.where(A > 0, 1.0 / (1.0 + self.dist_matrix ** 2), 0.0)
         return W
-
