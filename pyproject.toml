@@ -9,10 +9,7 @@ dependencies = [
     "numpy",
     "scikit-learn",
     "networkx",
-    "scipy",
-    "random",
-    "itertools",
-    "bisect"
+    "scipy"
 ]
 
 [tool.setuptools]
