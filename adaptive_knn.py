@@ -9,6 +9,7 @@ class AdaptiveKNNGraph:
         self.dist_matrix = squareform(pdist(data, metric='euclidean'))
         self.sorted_ind = np.argsort(self.dist_matrix, axis=0)
         self.n_samples = len(self.dist_matrix)
+        self.k = None
 
     def _depth_first_search(
             self,
@@ -140,8 +141,15 @@ class AdaptiveKNNGraph:
         :param dist_matrix: Optional distance matrix
         for a subset of points (used in recursion)
         """
+        is_top_level = dist_matrix is None
+        
         D = dist_matrix if dist_matrix is not None else self.dist_matrix
         k = self.find_smallest_k(dist_subset=D)
+        
+        # Save k only if we are at the top level
+        if is_top_level:
+            self.k = k
+            
         adj = self.get_adjacency(k=k, dist_subset=D)
 
         # If we had to go above min_k, try to optimize the sub-islands
