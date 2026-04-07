@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "graph_constructor"
+version = "0.1.0"
+dependencies = [
+    "numpy",
+    "scikit-learn",
+    "networkx",
+    "scipy",
+    "random",
+    "itertools",
+    "bisect"
+]
+
+[tool.setuptools]
+py-modules = ["WSN", "watts_strogatz", "graph", "erdos_renyi", "adaptive_knn"]
