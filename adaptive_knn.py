@@ -9,14 +9,16 @@ class AdaptiveKNNGraph:
         self.dist_matrix = squareform(pdist(data, metric='euclidean'))
         self.n_samples = len(self.dist_matrix)
         self.inject_edges = inject_edges
+        self.kernel=kernel
         if self.inject_edges:
             self.true_dist_matrix = self.dist_matrix.copy()
             self.perc = perc
             self.inject_random_edges()
+        else:
+            self.true_dist_matrix = self.dist_matrix
         self.sorted_ind = np.argsort(self.dist_matrix, axis=0)
         self.k = None
-        self.sigma=None
-        self.kernel=kernel
+        self.sigma = None
         
 
     def inject_random_edges(
@@ -187,9 +189,9 @@ class AdaptiveKNNGraph:
         return adj
 
     def gaussian_kernel(self):
-        knn_distances = self.true_dist_matrix[np.arange(self.n_samples), self.sorted_ind[self.k]]
+        knn_distances = self.true_dist_matrix[np.arange(self.n_samples), self.sorted_ind[self.k-1]]
         self.sigma = np.median(knn_distances)
-        dist_sq = self.dist_matrix ** 2
+        dist_sq = self.true_dist_matrix ** 2
         return np.exp(-dist_sq / (2 * (self.sigma**2)))
 
     def inverse_sq_euclidean_kernel(self):
