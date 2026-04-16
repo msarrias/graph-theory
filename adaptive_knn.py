@@ -3,14 +3,32 @@ import numpy as np
 
 
 class AdaptiveKNNGraph:
-    def __init__(self, data: np.ndarray, min_k: int = 5):
+    def __init__(self, data: np.ndarray, min_k: int = 5, inject_edges=False, perc=0.02, kernel='inverse_sq_euclidean_d'):
         self.data = data
         self.min_k = min_k
         self.dist_matrix = squareform(pdist(data, metric='euclidean'))
-        self.sorted_ind = np.argsort(self.dist_matrix, axis=0)
         self.n_samples = len(self.dist_matrix)
+        self.inject_edges = inject_edges
+        if self.inject_edges:
+            self.true_dist_matrix = self.dist_matrix.copy()
+            self.perc = perc
+            self.inject_random_edges()
+        self.sorted_ind = np.argsort(self.dist_matrix, axis=0)
         self.k = None
+        self.sigma=None
+        self.kernel=kernel
+        
 
+    def inject_random_edges(
+        self
+    ):
+        num_nodes = int(self.n_samples * self.perc)
+        pairs = np.random.permutation(self.n_samples)[:num_nodes].reshape(-1, 2)
+        
+        for vi, vj in pairs:
+            self.dist_matrix[vi, vj] = 0.0
+            self.dist_matrix[vj, vi] = 0.0
+        
     def _depth_first_search(
             self,
             v: int,
@@ -30,14 +48,15 @@ class AdaptiveKNNGraph:
         to_visit = neighbors.intersection(unmarked)
 
         for neighbor in to_visit:
-            marked.add(neighbor)
-            unmarked.remove(neighbor)
-            marked, unmarked = self._depth_first_search(
-                v=neighbor,
-                marked=marked,
-                unmarked=unmarked,
-                A=A
-            )
+            if neighbor in unmarked:
+                marked.add(neighbor)
+                unmarked.remove(neighbor)
+                marked, unmarked = self._depth_first_search(
+                    v=neighbor,
+                    marked=marked,
+                    unmarked=unmarked,
+                    A=A
+                )
 
         return marked, unmarked
 
@@ -167,8 +186,22 @@ class AdaptiveKNNGraph:
                         adj[np.ix_(indices, indices)] = self.build_refined_adj(dist_matrix=sub_dist)
         return adj
 
+    def gaussian_kernel(self):
+        knn_distances = self.true_dist_matrix[np.arange(self.n_samples), self.sorted_ind[self.k]]
+        self.sigma = np.median(knn_distances)
+        dist_sq = self.dist_matrix ** 2
+        return np.exp(-dist_sq / (2 * (self.sigma**2)))
+
+    def inverse_sq_euclidean_kernel(self):
+        return 1.0 / (1.0 + self.true_dist_matrix ** 2)
+    
     def compute_W(self):
         A = self.build_refined_adj()
-        # Apply inverse quadratic weighting: 1 / (1 + d^2)
-        W = np.where(A > 0, 1.0 / (1.0 + self.dist_matrix ** 2), 0.0)
+        
+        if self.kernel == 'gaussian':
+            kernel_matrix = self.gaussian_kernel()
+        elif self.kernel == 'inverse_sq_euclidean_d':
+            kernel_matrix = self.inverse_sq_euclidean_kernel()
+        W = np.where(A > 0, kernel_matrix, 0.0)
         return W
+        
