@@ -204,6 +204,6 @@ class AdaptiveKNNGraph:
             kernel_matrix = self.gaussian_kernel()
         elif self.kernel == 'inverse_sq_euclidean_d':
             kernel_matrix = self.inverse_sq_euclidean_kernel()
-        W = np.where(A > 0, kernel_matrix, 0.0)
+        W = np.where(A > 0, np.maximum(kernel_matrix, 1e-12), 0.0)
         return W
         
